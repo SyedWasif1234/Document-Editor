@@ -1,0 +1,47 @@
+// Prisma schema for the Collaborative Document Editor
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("CUSTOMER") // 'CUSTOMER' or 'ADMIN'
+  createdAt DateTime @default(now())
+
+  documents     Document[]
+  collaborators Collaborator[]
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownerId       String
+  owner         User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  collaborators Collaborator[]
+}
+
+model Collaborator {
+  id   String @id @default(uuid())
+  role String // 'EDITOR' or 'VIEWER'
+
+  docId  String
+  doc    Document @relation(fields: [docId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([docId, userId]) // prevent duplicate shares
+}
