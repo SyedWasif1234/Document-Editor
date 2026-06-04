@@ -44,6 +44,7 @@ export default function Editor() {
   const [shareOpen, setShareOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [downloadOpen, setDownloadOpen] = useState(false);
+  const [userRole, setUserRole] = useState('VIEWER'); // 'OWNER', 'EDITOR', 'VIEWER'
 
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const saveTimeoutRef = useRef(null);
@@ -70,6 +71,7 @@ export default function Editor() {
         setDoc(d);
         setTitle(d.title);
         setContent(d.content || '');
+        setUserRole(res.data.role);
       } catch (err) {
         setError('Document not found or you do not have access.');
       } finally {
@@ -113,9 +115,8 @@ export default function Editor() {
     return () => window.removeEventListener('keydown', handler);
   }, [title, content]);
 
-  const isOwner = doc?.ownerId === currentUser.id;
-  const myCollab = doc?.collaborators?.find((c) => c.userId === currentUser.id);
-  const isViewer = !isOwner && myCollab?.role === 'VIEWER';
+  const isOwner = userRole === 'OWNER';
+  const isViewer = userRole === 'VIEWER';
   const collaboratorCount = doc?.collaborators?.length || 0;
 
   const handleDelete = async () => {
@@ -248,7 +249,7 @@ export default function Editor() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-4">
           {/* Back button */}
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate(currentUser.id ? '/' : '/login')}
             className="btn-ghost p-2 flex-shrink-0"
             title="Back to Dashboard"
           >

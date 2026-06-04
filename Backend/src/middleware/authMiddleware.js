@@ -44,6 +44,32 @@ export async function authMiddleware(req, res, next) {
   }
 }
 
+export async function optionalAuthMiddleware(req, res, next) {
+  try {
+    let token = req.cookies.token;
+    const authHeader = req.headers.authorization;
+    if (!token && authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    }
+    if (!token) {
+      return next(); // Proceed without req.user
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, name: true, email: true, role: true },
+    });
+    if (user) {
+      req.user = user;
+    }
+    next();
+  } catch (error) {
+    // Ignore errors for optional auth
+    next();
+  }
+}
+
 export function authorize(...roles) {
   return (req, res, next) => {
     if (!req.user) {

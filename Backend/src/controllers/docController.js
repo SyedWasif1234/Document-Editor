@@ -70,14 +70,7 @@ export const getAllDocuments = async (req, res) => {
 export const getDocumentById = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
 
-    const { allowed } = await hasAccess(id, userId);
-    if (!allowed) {
-      return res.status(404).json({ error: "Document not found or access denied." });
-    }
-
-    // Re-fetch with full relations for a clean response
     const document = await prisma.document.findUnique({
       where: { id },
       include: {
@@ -88,7 +81,23 @@ export const getDocumentById = async (req, res) => {
       },
     });
 
-    return res.status(200).json({ document });
+    if (!document) {
+      return res.status(404).json({ error: "Document not found." });
+    }
+
+    let role = "VIEWER";
+    if (req.user) {
+      if (document.ownerId === req.user.id) {
+        role = "OWNER";
+      } else {
+        const collab = document.collaborators.find((c) => c.userId === req.user.id);
+        if (collab) {
+          role = collab.role;
+        }
+      }
+    }
+
+    return res.status(200).json({ document, role });
   } catch (err) {
     console.error("getDocumentById error:", err);
     return res.status(500).json({ error: "Internal server error." });

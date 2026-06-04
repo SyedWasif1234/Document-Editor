@@ -14,11 +14,11 @@ export default function App() {
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/doc/:id" element={<Editor />} />
 
           {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/doc/:id" element={<Editor />} />
           </Route>
 
           {/* Catch-all */}

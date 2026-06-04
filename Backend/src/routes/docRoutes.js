@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {authMiddleware} from "../middleware/authMiddleware.js";
+import { authMiddleware, optionalAuthMiddleware } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
 import {
   getAllDocuments,
@@ -13,12 +13,14 @@ import {
 
 const router = Router();
 
-// All document routes require authentication
+// Publicly accessible document view with optional auth to detect role
+router.get("/:id", optionalAuthMiddleware, getDocumentById);
+
+// All other document routes require authentication
 router.use(authMiddleware);
 
 // CRUD
 router.get("/", getAllDocuments);
-router.get("/:id", getDocumentById);
 router.post("/create", createDocument);
 router.put("/update/:id", updateDocument);
 router.delete("/:id", deleteDocument);
